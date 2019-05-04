@@ -12,7 +12,7 @@ import static io.restassured.RestAssured.given;
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 import static org.hamcrest.CoreMatchers.*;
 
-public class GetTrelloBoards extends BaseTest {
+public class TrelloBoardTest extends BaseTest {
 
     String expectedURL = "https://trello.com/b/Mb65TdAb/vapasi-board-23";
     String listName = "TO DO THIS";
