@@ -10,12 +10,13 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 
 public class TrelloBoardTest extends BaseTest {
 
     String expectedURL = "https://trello.com/b/Mb65TdAb/vapasi-board-23";
-    String listName = "TO DO THIS";
+    String listName = "ListCreatedNow";
     String listID;
 
     int expectedBoardHeadings = 5; //need to see how can we parameterise
@@ -35,14 +36,18 @@ public class TrelloBoardTest extends BaseTest {
         requestParams.put("key", key);
         requestParams.put("token", token);
 
-        listID = given()
-                .body(requestParams.toJSONString())
+        listID = given().log().all()
+                .queryParam("name", listName)
+                .queryParam("idBoard", expectedBoardID)
+                .queryParam("key", key)
+                .queryParam("token", token)
                 .contentType(ContentType.JSON)
                 .when()
                 .post("1/lists")
                 .then()
-                .contentType(ContentType.JSON)
-                .statusCode(200)
+                // .contentType(ContentType.JSON)
+                // .statusCode(200)
+                .log().ifValidationFails()
                 .extract()
                 .response().jsonPath().getMap("$").get("id").toString();
 
@@ -63,23 +68,24 @@ public class TrelloBoardTest extends BaseTest {
         requestParams.put("idList", listID);
         requestParams.put("idBoard", expectedBoardID);
 
-        Response response = given().log().ifValidationFails()
-                .body(requestParams.toJSONString())
-                .when()
-                .contentType(ContentType.JSON)
-                .post("1/cards")
-                .then()
-                .contentType(ContentType.JSON)
-                .and()
-                .statusCode(200)    //Status code validation
-                .and()
-                .assertThat()
-                .body(matchesJsonSchemaInClasspath("createcard.json")) //Schema validator
-                .and()
-                .body("name", equalTo(expectedCardName))        //Response data validation
-                .body("desc", equalTo(expectedCardDescription))
-                .extract()
-                .response();
+        Response response =
+                given().log().ifValidationFails()
+                        .body(requestParams.toJSONString())
+                        .when()
+                        .contentType(ContentType.JSON)
+                        .post("1/cards")
+                        .then()
+                        .contentType(ContentType.JSON)
+                        .and()
+                        .statusCode(200)    //Status code validation
+                        .and()
+                        .assertThat()
+                        .body(matchesJsonSchemaInClasspath("createcard.json")) //Schema validator
+                        .and()
+                        .body("name", equalTo(expectedCardName))        //Response data validation
+                        .body("desc", equalTo(expectedCardDescription))
+                        .extract()
+                        .response();
 
 
         //Testng asserts not required when you can see the same in rest assured
@@ -96,18 +102,18 @@ public class TrelloBoardTest extends BaseTest {
                 .queryParam("token", token)
                 .contentType(ContentType.JSON)
                 .when()
-                    .get("1/members/me/boards")
+                .get("1/members/me/boards")
                 .then()
-                    .contentType(ContentType.JSON)
+                .contentType(ContentType.JSON)
                 .and()
-                    .statusCode(200)
+                .statusCode(200)
                 .extract()
                 .response();
 
         List<Map<String, ?>> listMap = response.jsonPath().getList("$");
 
-       // Assert.assertEquals(4, response.jsonPath().getList("$").size());
-        Assert.assertEquals(checkAutomationExists(listMap),1);
+        // Assert.assertEquals(4, response.jsonPath().getList("$").size());
+        Assert.assertEquals(checkAutomationExists(listMap), 1);
     }
 
 
@@ -123,8 +129,8 @@ public class TrelloBoardTest extends BaseTest {
                 .then()
                 .contentType(ContentType.JSON)
                 .statusCode(200)
-                .body("id",equalTo(expectedBoardID))
-                .body("name",equalTo(expectedBoardName))
+                .body("id", equalTo(expectedBoardID))
+                .body("name", equalTo(expectedBoardName))
                 .extract()
                 .response();
     }
@@ -144,21 +150,22 @@ public class TrelloBoardTest extends BaseTest {
     @Test
     public void testlistsInBoard() {
 
-        Response response =
-                given()
-                    .queryParam("fields", "name,url")
-                    .queryParam("key", key)
-                    .queryParam("token", token)
-                    .contentType(ContentType.JSON)
-                .when()
-                    .get("1/boards/" + expectedBoardID + "/lists")
-                .then()
-                    .contentType(ContentType.JSON)
-                        .statusCode(200)
-                .extract()
-                .response();
 
-        Integer actualLength = response.jsonPath().getList("$").size();
+        given()
+                .queryParam("fields", "name,url,pos,closed,id,idBoard,softLimit")
+                .queryParam("key", key)
+                .queryParam("token", token)
+                .contentType(ContentType.JSON)
+                .when()
+                .get("1/boards/" + expectedBoardID + "/lists")
+                .then()
+                .contentType(ContentType.JSON)
+                .statusCode(200)
+                .body("[0].name", equalTo(listName))
+                .body("[0].id", is(listID));
+
+
+        // Integer actualLength = response.jsonPath().getList("$").size();
 //        Assert.assertTrue(expectedBoardHeadings == actualLength);
     }
 

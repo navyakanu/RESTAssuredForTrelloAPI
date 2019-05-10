@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+
+<suite name="SmokeForMockAndRealAPI">
+    <parameter name="env" value="testenv"></parameter>
+    <test name="smokereal">
+        <classes>
+            <class name="TrelloBoardTest"/>
+        </classes>
+    </test>
+    <parameter name="env" value="mockenv"></parameter>
+    <test name="smokemock">
+        <classes>
+            <class name="TrelloBoardTest"/>
+        </classes>
+    </test>
+</suite>
